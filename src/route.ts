@@ -1,9 +1,9 @@
 import {Router} from 'express'
-// import './common/db/connection'
+import {authRouter} from "./app/auth/auth.route";
 
 export const router = Router()
 
-router.use('/auth')
-router.use('/user')
-router.use('/post')
-router.use('/comment')
+router.use('/auth',authRouter)
+// router.use('/user')
+// router.use('/post')
+// router.use('/comment')

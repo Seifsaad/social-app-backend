@@ -4,6 +4,7 @@ export interface IUser{
     userName:string,
     email:string,
     password:string,
-    provider:Provider,
-    gender:Gender,
+    phoneNumber?: string,
+    provider?:Provider,
+    gender?:Gender,
 }
