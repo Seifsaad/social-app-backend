@@ -1,4 +1,4 @@
-import {cacheProvider} from "../cache/init.js";
+import {cacheProvider} from "../cache/init.ts";
 
 
 export function idempotency(ttl= 3600){

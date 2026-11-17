@@ -1,5 +1,4 @@
 import {Model, QueryFilter, QueryOptions, Types} from "mongoose";
-import {User} from "../../app/user/model/user.model";
 
 export abstract class AbstractRepository<T> {
 

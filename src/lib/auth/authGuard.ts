@@ -3,11 +3,6 @@ import jwt, {JwtPayload} from "jsonwebtoken";
 import {env} from "../config/env.js";
 import {NextFunction,Request,Response} from "express";
 
-interface JwtPayload {
-    sub: string;
-    email: string;
-    role: string;
-}
 
 export function authGuard(req:Request, res:Response, next:NextFunction) {
     try {
