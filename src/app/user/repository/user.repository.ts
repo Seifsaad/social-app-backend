@@ -1,9 +1,8 @@
 import {IUser} from "../interface/user.interface";
 import {User} from "../model/user.model";
-import {Types} from "mongoose";
 import {AbstractRepository} from "../../../lib/db/abstract.repository";
 
-class UserRepository extends AbstractRepository<IUser>{
+export class UserRepository extends AbstractRepository<IUser>{
 
     constructor() {
         super(User)
