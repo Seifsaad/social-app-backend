@@ -1,6 +1,6 @@
 import {MailjetProvider} from "../../pkg/email/mailjet";
-import {env} from "../config/env";
 import {NodemailerProvider} from "../../pkg/email/nodemailer";
+import {env} from "../config/env";
 
 export const mailjetProvider =  new MailjetProvider({
     apiKey: env.mailjet.apiKey,

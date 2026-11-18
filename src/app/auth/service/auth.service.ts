@@ -1,24 +1,27 @@
-import {RegisterDto} from "../dto/dto";
+import {RegisterDto, VerifyAccountDto} from "../dto/dto";
 import userRepository from "../../user/repository/user.repository";
-import { userAlreadyExist } from "../../user/errors";
-import { generateOtpCode } from "../../../lib/utils/otp";
-import { hashedPassword } from "../utils/hash";
-import { cacheProvider } from "../../../lib/cache/init";
+import {userAlreadyExist, userAlreadyVerified, userNotExist} from "../../user/errors";
+import {generateOtpCode} from "../../../lib/utils/otp";
+import {hashedPassword} from "../utils/hash";
+import {cacheProvider} from "../../../lib/cache/init";
 import {toSeconds} from "../../../pkg/utils/time";
 import {MailProvider} from "../../../pkg/email/mail.interface";
 import {mailjetProvider} from "../../../lib/email/init";
 import {UserRepository} from "../../user/repository/user.repository";
+import {AppError} from "../../../lib/error/error";
+import {invalidCode, otpExpired} from "../errors";
 
 export class AuthService {
-    private twoStepVerificationKey ='2-step-verification';
-    private sendOtpKey ='otp:';
-    private readonly userRepository:UserRepository = userRepository;
-    private readonly mailProvider:MailProvider
+    private twoStepVerificationKey = '2-step-verification';
+    private sendOtpKey = 'otp:';
+    private readonly userRepository: UserRepository = userRepository;
+    private readonly mailProvider: MailProvider
+
     constructor() {
         this.mailProvider = mailjetProvider
     }
 
-     register= async (registerDto:RegisterDto)=> {
+    register = async (registerDto: RegisterDto) => {
         const userExist = await this.userRepository.findByEmail(registerDto.email)
         if (userExist) throw userAlreadyExist;
         registerDto.password = await hashedPassword(registerDto.password);
@@ -33,17 +36,16 @@ export class AuthService {
         return createUser
     }
 
-    async varifyAccount(email, code) {
-        const updatedUser = verifyFn(email, code,
-            async(user)
-        {
-            if (user.isVerified === true) throw new AppError('User already verified');
-            const updatedUser = await userRepository.updateUserByEmail(user.email, {isVerified: true});
-            return updatedUser;
-        }
-    )
-        ;
-        return updatedUser
+    varifyAccount = async (varifyAccountDto: VerifyAccountDto) => {
+        const user = await this.userRepository.findByEmail(varifyAccountDto.email)
+        if (!user) throw userNotExist;
+        if (user.isVerified === true) throw userAlreadyVerified;
+        const cacheCode = await cacheProvider.get(`${this.sendOtpKey}${user._id.toString()}`);
+        if (!cacheCode) throw otpExpired;
+        if (cacheCode ! == varifyAccountDto.code) throw invalidCode;
+        const updatedUser = await this.userRepository.update({email: varifyAccountDto.email}, {isVerified: true});
+        await cacheProvider.del(`${this.sendOtpKey}${user._id.toString()}`);
+        return updatedUser;
     }
 
     async enable2stepVerification(email, code) {

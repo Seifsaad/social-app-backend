@@ -1,15 +1,15 @@
-import {createTransport, Transport, Transporter} from 'nodemailer'
+import {createTransport, Transporter} from 'nodemailer'
 import {MailProvider} from "./mail.interface";
 
 interface INodemailerConfig {
     host: string;
     port: number;
     user: string;
-    pass:string;
+    pass: string;
     fromEmail: string,
 }
 
-export class NodemailerProvider implements MailProvider{
+export class NodemailerProvider implements MailProvider {
     private client: Transporter;
     private readonly fromEmail: string;
 
@@ -17,6 +17,7 @@ export class NodemailerProvider implements MailProvider{
         this.client = createTransport({
             host: config.host,
             port: config.port,
+            secure: false,
             auth: {
                 user: config.user,
                 pass: config.pass

@@ -7,4 +7,6 @@ export interface IUser{
     phoneNumber?: string,
     provider?:Provider,
     gender?:Gender,
+    isVerified?:boolean,
+    isDeleted?:boolean,
 }
