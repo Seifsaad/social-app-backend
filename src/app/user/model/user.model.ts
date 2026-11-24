@@ -1,6 +1,7 @@
 import {HydratedDocument, model, Schema} from "mongoose";
 import {Gender, Provider} from "../../auth/enum/enum";
 import {IUser} from "../interface/user.interface";
+import {string} from "zod";
 
 export type userDocument = HydratedDocument<IUser>
 
@@ -34,8 +35,8 @@ const schema  = new Schema<IUser>({
     gender:{
         type: Number,
         enum: Gender
-    }
-
-})
+    },
+    profilePicturePath:String,
+});
 
 export const User = model("User", schema);

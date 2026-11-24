@@ -54,7 +54,7 @@ export class AuthService {
         return updatedUser;
     }
 
-    async enable2stepVerification(email, code) {
+    enable2stepVerification =async(email, code)=> {
         const updatedUser = verifyFn(email, code, async(user)
         {
             const updatedUser = await userRepository.updateUserByEmail(user.email, {twoStepsVerification: true});
@@ -65,7 +65,7 @@ export class AuthService {
         return updatedUser
     }
 
-    async verifyToLogin(email, code) {
+    verifyToLogin=async(email, code)=> {
 
         const {accessToken, refreshToken} = await verifyFn(email, code, async(user)
         {

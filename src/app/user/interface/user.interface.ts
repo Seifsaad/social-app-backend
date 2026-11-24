@@ -9,4 +9,5 @@ export interface IUser{
     gender?:Gender,
     isVerified?:boolean,
     isDeleted?:boolean,
+    profilePicturePath?:string,
 }
