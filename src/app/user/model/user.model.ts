@@ -1,7 +1,6 @@
 import {HydratedDocument, model, Schema} from "mongoose";
 import {Gender, Provider} from "../../auth/enum/enum";
 import {IUser} from "../interface/user.interface";
-import {string} from "zod";
 
 export type userDocument = HydratedDocument<IUser>
 
@@ -18,7 +17,7 @@ const schema  = new Schema<IUser>({
         required: true,
         trim: true,
         minlength: 3,
-        toLowercase: true,
+        lowercase: true,
     },
     password:{
         type: String,
@@ -36,7 +35,15 @@ const schema  = new Schema<IUser>({
         type: Number,
         enum: Gender
     },
+    twoStepsVerification:{
+        type: Boolean,
+        default: false,
+    },
     profilePicturePath:String,
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 export const User = model("User", schema);

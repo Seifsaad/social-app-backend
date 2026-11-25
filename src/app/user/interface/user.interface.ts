@@ -8,6 +8,7 @@ export interface IUser{
     provider?:Provider,
     gender?:Gender,
     isVerified?:boolean,
+    twoStepsVerification?:boolean,
     isDeleted?:boolean,
     profilePicturePath?:string,
 }

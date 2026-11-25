@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
-import  {env} from "../config/env";
+import {env} from "../config/env";
 
-mongoose.connect(env.db.url)
+
+export async function connectDB(): Promise<typeof mongoose> {
+    return mongoose.connect(env.db.url);
+}

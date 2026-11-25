@@ -1,6 +1,14 @@
-import {LoginDto, RegisterDto, SendOtpDto, VerifyAccountDto} from "../dto/dto";
+import {
+    Enable2StepVerificationDto,
+    LoginDto,
+    RegisterDto,
+    SendOtpDto,
+    VerifyAccountDto,
+    VerifyToLoginDto,
+} from "../dto/dto";
 import userRepository from "../../user/repository/user.repository";
 import {userAlreadyExist, userAlreadyVerified, userNotExist, userNotVerified} from "../../user/errors";
+import {userDocument} from "../../user/model/user.model";
 import {generateOtpCode} from "../../../lib/utils/otp";
 import {comparePassword, hashedPassword} from "../utils/hash";
 import {cacheProvider} from "../../../lib/cache/init";
@@ -27,6 +35,25 @@ class AuthService {
         this.mailProvider = mailjetProvider
     }
 
+    private verifyUserOtp = async (email: string, code: string, preCheck?: (user: userDocument) => void) => {
+        const user = await this.userRepository.findByEmail(email);
+        if (!user) throw userNotExist;
+        preCheck?.(user);
+        const cacheKey = `${this.sendOtpKey}${user._id.toString()}`;
+        const cacheCode = await cacheProvider.get(cacheKey);
+        if (!cacheCode) throw otpExpired;
+        if (cacheCode !== code) throw invalidCode;
+        return {user, cacheKey};
+    }
+
+    private issueTokens = async (user: userDocument) => {
+        const jti = crypto.randomUUID();
+        const accessToken = generateAccessToken({id: user._id, name: user.userName});
+        const refreshToken = generateRefreshToken({jti: jti, id: user._id, name: user.userName});
+        await cacheProvider.set(`refreshToken:${jti}`, jti, toSeconds(7, 'days'));
+        return {accessToken, refreshToken};
+    }
+
     register = async (registerDto: RegisterDto) => {
         const userExist = await this.userRepository.findByEmail(registerDto.email)
         if (userExist) throw userAlreadyExist;
@@ -37,48 +64,33 @@ class AuthService {
         // await otpRepository.createOTP({
         //     code: code, email: userData.email, expiresAt: new Date(Date.now() + toMs(5, 'minutes')),
         // })
-        await cacheProvider.set(`otp:${registerDto.email}`, code, toSeconds(3, 'minutes'))
+        await cacheProvider.set(`${this.sendOtpKey}${createUser._id.toString()}`, code, toSeconds(3, 'minutes'))
         await this.mailProvider.send(registerDto.email, `verification code`, `<h1>Your verification code is ${code}</h1>`)
         return createUser
     }
 
-    varifyAccount = async (varifyAccountDto: VerifyAccountDto) => {
-        const user = await this.userRepository.findByEmail(varifyAccountDto.email)
-        if (!user) throw userNotExist;
-        if (user.isVerified === true) throw userAlreadyVerified;
-        const cacheCode = await cacheProvider.get(`${this.sendOtpKey}${user._id.toString()}`);
-        if (!cacheCode) throw otpExpired;
-        if (cacheCode !== varifyAccountDto.code) throw invalidCode;
+    verifyAccount = async (varifyAccountDto: VerifyAccountDto) => {
+        const {cacheKey} = await this.verifyUserOtp(varifyAccountDto.email, varifyAccountDto.code, (user) => {
+            if (user.isVerified === true) throw userAlreadyVerified;
+        });
         const updatedUser = await this.userRepository.update({email: varifyAccountDto.email}, {isVerified: true});
-        await cacheProvider.del(`${this.sendOtpKey}${user._id.toString()}`);
+        await cacheProvider.del(cacheKey);
         return updatedUser;
     }
 
-    // enable2stepVerification =async(email, code)=> {
-    //     const updatedUser = verifyFn(email, code, async(user)
-    //     {
-    //         const updatedUser = await userRepository.updateUserByEmail(user.email, {twoStepsVerification: true});
-    //         return updatedUser;
-    //     }
-    // )
-    //     ;
-    //     return updatedUser
-    // }
+    enable2stepVerification = async (enable2StepDto: Enable2StepVerificationDto) => {
+        const {user, cacheKey} = await this.verifyUserOtp(enable2StepDto.email, enable2StepDto.code);
+        const updatedUser = await this.userRepository.update({email: user.email}, {twoStepsVerification: true});
+        await cacheProvider.del(cacheKey);
+        return updatedUser;
+    }
 
-    // verifyToLogin=async(email, code)=> {
-    //
-    //     const {accessToken, refreshToken} = await verifyFn(email, code, async(user)
-    //     {
-    //         const jti = crypto.randomUUID();
-    //         const accessToken = generateAccessToken({sub: user._id, name: user.name});
-    //         const refreshToken = generateRefreshToken({jti: jti, sub: user._id, name: user.name});
-    //         await cacheProvider.set(`refreshToken:${jti}`, jti, toSeconds(7, 'days'));
-    //         return {accessToken, refreshToken};
-    //     }
-    // )
-    //     ;
-    //     return {accessToken, refreshToken};
-    // }
+    verifyToLogin = async (verifyToLoginDto: VerifyToLoginDto) => {
+        const {user, cacheKey} = await this.verifyUserOtp(verifyToLoginDto.email, verifyToLoginDto.code);
+        const tokens = await this.issueTokens(user);
+        await cacheProvider.del(cacheKey);
+        return tokens;
+    }
 
      login=async(loginDto:LoginDto)=> {
         let cachedTries = await cacheProvider.get(`login-tries:${loginDto.email}:login`);
@@ -94,10 +106,7 @@ class AuthService {
         //     await mailjetProvider.sendEmail(email, '2 steps verification email code', `<h3>Your OTP to login is ${code}</h3>`)
         //     return;
         // }
-        const jti = crypto.randomUUID();
-        const accessToken = generateAccessToken({id: user._id, name: user.userName});
-        const refreshToken = generateRefreshToken({jti: jti, id: user._id, name: user.userName});
-        await cacheProvider.set(`refreshToken:${jti}`, jti, toSeconds(7, 'days'));
+        const {accessToken, refreshToken} = await this.issueTokens(user);
         let cachedTTL = await cacheProvider.ttl(`login-tries:${loginDto.email}:login`);
         cachedTries = cachedTries ?? 4;
         const ttl = cachedTTL === -2 ? toSeconds(3, 'minutes') : cachedTTL;
