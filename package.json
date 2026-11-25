@@ -1,4 +1,8 @@
 {
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "node --watch ."
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1175.0",
     "@types/multer": "^2.3.0",

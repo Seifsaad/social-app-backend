@@ -7,14 +7,14 @@ import {Response} from "express";
 
 export function generateAccessToken(payload:TUserPayload) {
     return jwt.sign(
-        payload, env.jwt.secret,
+        payload, env.jwt.accessSecret,
         { expiresIn: toMs(1, 'hours') }
     );
 }
 
 export function generateRefreshToken(payload:TUserPayload) {
     return jwt.sign(
-        payload, env.jwt.secret,
+        payload, env.jwt.refreshSecret,
         { expiresIn: toMs(7, 'days') }
     );
 }

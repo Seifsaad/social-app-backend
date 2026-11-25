@@ -1,8 +1,8 @@
 import {NextFunction,Request,Response} from "express";
-import authService,{AuthService} from "../service/auth.service";
+import authService from "../service/auth.service";
 
 class AuthController {
-    private authService : AuthService = authService;
+    private authService = authService;
     constructor() {
     }
 

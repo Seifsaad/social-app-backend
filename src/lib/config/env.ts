@@ -5,7 +5,11 @@ config()
 const schema = z.object({
     PORT: z.string().default('3000'),
     MONGODB_URL: z.string(),
-    JWT_SECRET: z.string(),
+    JWT_ACCESS_SECRET: z.string(),
+    JWT_REFRESH_SECRET: z.string(),
+    MAIL_HOST:z.string(),
+    MAIL_PORT: z.string(),
+    MAIL_FROM_EMAIL:z.string(),
     MAIL_USER: z.string().trim().toLowerCase(),
     MAIL_PASSWORD: z.string(),
     GOOGLE_WEB_OAUTH_CLIENT_ID: z.string(),
@@ -40,8 +44,11 @@ export const env = {
         password: parsed.REDIS_PASSWORD,
     },
     nodemailer: {
+        host: parsed.MAIL_HOST,
+        port: Number(parsed.MAIL_PORT),
         user: parsed.MAIL_USER,
-        password: parsed.MAIL_PASSWORD,
+        pass: parsed.MAIL_PASSWORD,
+        fromEmail: parsed.MAIL_FROM_EMAIL,
     },
     mailjet: {
         apiKey: parsed.MAILJET_API_KEY,
@@ -50,7 +57,8 @@ export const env = {
         fromName: parsed.MAILJET_FROM_NAME,
     },
     jwt: {
-        secret: parsed.JWT_SECRET,
+        accessSecret: parsed.JWT_ACCESS_SECRET,
+        refreshSecret: parsed.JWT_REFRESH_SECRET,
     },
     payments:{},
     aws:{

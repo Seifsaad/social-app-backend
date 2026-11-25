@@ -6,9 +6,9 @@ export function multerUpload(){
 }
 
 export function multerUploadSingle(fieldName:string){
-    multerUpload().single(fieldName)
+    return multerUpload().single(fieldName)
 }
 
 export function multerUploadArray(fieldName:string,maxCount:number){
-    multerUpload().array(fieldName,maxCount)
+    return multerUpload().array(fieldName,maxCount)
 }

@@ -17,7 +17,7 @@ import jwt from "jsonwebtoken";
 import {env} from "../../../lib/config/env";
 import {TUserPayload} from "../../../lib/interface/userPayload.interface";
 
-export class AuthService {
+class AuthService {
     private twoStepVerificationKey = '2-step-verification';
     private sendOtpKey = 'otp:';
     private readonly userRepository: UserRepository = userRepository;
@@ -48,37 +48,37 @@ export class AuthService {
         if (user.isVerified === true) throw userAlreadyVerified;
         const cacheCode = await cacheProvider.get(`${this.sendOtpKey}${user._id.toString()}`);
         if (!cacheCode) throw otpExpired;
-        if (cacheCode ! == varifyAccountDto.code) throw invalidCode;
+        if (cacheCode !== varifyAccountDto.code) throw invalidCode;
         const updatedUser = await this.userRepository.update({email: varifyAccountDto.email}, {isVerified: true});
         await cacheProvider.del(`${this.sendOtpKey}${user._id.toString()}`);
         return updatedUser;
     }
 
-    enable2stepVerification =async(email, code)=> {
-        const updatedUser = verifyFn(email, code, async(user)
-        {
-            const updatedUser = await userRepository.updateUserByEmail(user.email, {twoStepsVerification: true});
-            return updatedUser;
-        }
-    )
-        ;
-        return updatedUser
-    }
+    // enable2stepVerification =async(email, code)=> {
+    //     const updatedUser = verifyFn(email, code, async(user)
+    //     {
+    //         const updatedUser = await userRepository.updateUserByEmail(user.email, {twoStepsVerification: true});
+    //         return updatedUser;
+    //     }
+    // )
+    //     ;
+    //     return updatedUser
+    // }
 
-    verifyToLogin=async(email, code)=> {
-
-        const {accessToken, refreshToken} = await verifyFn(email, code, async(user)
-        {
-            const jti = crypto.randomUUID();
-            const accessToken = generateAccessToken({sub: user._id, name: user.name});
-            const refreshToken = generateRefreshToken({jti: jti, sub: user._id, name: user.name});
-            await cacheProvider.set(`refreshToken:${jti}`, jti, toSeconds(7, 'days'));
-            return {accessToken, refreshToken};
-        }
-    )
-        ;
-        return {accessToken, refreshToken};
-    }
+    // verifyToLogin=async(email, code)=> {
+    //
+    //     const {accessToken, refreshToken} = await verifyFn(email, code, async(user)
+    //     {
+    //         const jti = crypto.randomUUID();
+    //         const accessToken = generateAccessToken({sub: user._id, name: user.name});
+    //         const refreshToken = generateRefreshToken({jti: jti, sub: user._id, name: user.name});
+    //         await cacheProvider.set(`refreshToken:${jti}`, jti, toSeconds(7, 'days'));
+    //         return {accessToken, refreshToken};
+    //     }
+    // )
+    //     ;
+    //     return {accessToken, refreshToken};
+    // }
 
      login=async(loginDto:LoginDto)=> {
         let cachedTries = await cacheProvider.get(`login-tries:${loginDto.email}:login`);
@@ -101,7 +101,7 @@ export class AuthService {
         let cachedTTL = await cacheProvider.ttl(`login-tries:${loginDto.email}:login`);
         cachedTries = cachedTries ?? 4;
         const ttl = cachedTTL === -2 ? toSeconds(3, 'minutes') : cachedTTL;
-        await cacheProvider.set(`login-tries:${loginDto.email}`, String(+cachedTries - 1), ttl);
+        await cacheProvider.set(`login-tries:${loginDto.email}:login`, String(+cachedTries - 1), ttl);
         return {accessToken, refreshToken};
     }
 
@@ -146,7 +146,7 @@ export class AuthService {
     }
 
     refreshTokenFn =async(token:string)=> {
-        const payload = jwt.verify(token,env.jwt.secret) as TUserPayload
+        const payload = jwt.verify(token,env.jwt.refreshSecret) as TUserPayload
         const accessToken = generateAccessToken({sub: payload.sub, userName: payload.userName});
         const refreshToken = generateRefreshToken({sub: payload.sub, userName: payload.userName});
         return {
@@ -157,5 +157,5 @@ export class AuthService {
 
 }
 
-
+export default new AuthService()
 

@@ -2,7 +2,7 @@ import Redis from "ioredis";
 import {ICacheProvider} from "./cache.interface";
 
 interface IRedisConfig {
-    url: string;
+    url?: string;
     host: string;
     port: number;
     password: string;
