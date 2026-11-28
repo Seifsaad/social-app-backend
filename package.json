@@ -1,10 +1,12 @@
 {
   "main": "dist/server.js",
   "scripts": {
-    "dev": "node --watch ."
+    "build": "tsc",
+    "dev": "concurrently -n tsc,server \"tsc --watch\" \"node --watch .\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1175.0",
+    "@aws-sdk/s3-request-presigner": "^3.1179.0",
     "@types/multer": "^2.3.0",
     "argon2": "^0.45.2",
     "bcrypt": "^6.0.0",
@@ -22,6 +24,8 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10"
+    "@types/jsonwebtoken": "^9.0.10",
+    "concurrently": "^10.0.7",
+    "typescript": "^7.0.2"
   }
 }

@@ -5,4 +5,6 @@ export interface ICloudProvider {
     deleteFile(key:string):Promise<void>;
 
     getFile(key:string):Promise<Buffer>;
+
+    generatePresignedUrl(file: Partial<Express.Multer.File>, path:string):Promise<string>;
 }
